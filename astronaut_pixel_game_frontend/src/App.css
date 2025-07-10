@@ -102,32 +102,7 @@ canvas {
 .pixel-btn:active, .pixel-btn:focus {
   filter: brightness(0.8);
 }
-.task-zone-msg {
-  position: absolute;
-  left: 50%; transform: translateX(-50%);
-  top: 51px;
-  background: #1e2637e6;
-  color: #fff;
-  padding: 15px 23px 12px 23px;
-  font-size: 1.1rem;
-  border-radius: 11px;
-  border: 2px solid var(--accent);
-  width: 80%;
-  z-index: 3;
-  box-shadow: 0 1px 8px #25334faa, 0 1px 6px #0c1527c3;
-}
-.progressbar {
-  background: #444d;
-  border-radius: 3.5px;
-  height: 12px; margin: 8px 0 0 0; width: 98%;
-  border: 1px solid #9fd5fd;
-  overflow: hidden;
-}
-.progressbar > div {
-  height: 100%;
-  transition: width 0.16s;
-  background: #e87a41;
-}
+/* .task-zone-msg and .progressbar styles removed as tasks are deprecated */
 .overlay-msg {
   position: absolute;
   z-index: 8;
