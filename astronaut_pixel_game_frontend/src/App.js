@@ -115,17 +115,15 @@ function drawAlien(ctx, x, y, type = 0) {
 }
 
 function drawAsteroid(ctx, x, y, r) {
+  // Renders a retro pixel-style square asteroid
   ctx.save();
   ctx.fillStyle = ASTEROID_COLOR;
-  ctx.beginPath();
-  ctx.arc(x + r, y + r, r, 0, 2 * Math.PI);
-  ctx.fill();
-  // craters
-  ctx.fillStyle = "#b79c62aa";
-  ctx.beginPath();
-  ctx.arc(x + r - 4, y + r - 4, r / 4, 0, 2 * Math.PI);
-  ctx.arc(x + r + 3, y + r + 6, r / 5, 0, 2 * Math.PI);
-  ctx.fill();
+  // Draw a solid square, ignore the circle/arc
+  ctx.fillRect(Math.round(x), Math.round(y), Math.round(r * 2), Math.round(r * 2));
+  // Optional: subtle lighter outline for pixel art effect
+  ctx.strokeStyle = "#b79c62";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(Math.round(x), Math.round(y), Math.round(r * 2), Math.round(r * 2));
   ctx.restore();
 }
 
@@ -183,7 +181,10 @@ function useWindowScale(width, height) {
 function randomPosY() {
   return Math.random() * (GAME_HEIGHT - 50) + 30;
 }
-function randomVel() { return Math.random() * 2.5 + 1.3; }
+function randomVel() { 
+  // Reduce speed range for slower movement (e.g. 0.7 to 1.1)
+  return Math.random() * 0.4 + 0.7; 
+}
 function randomAsteroidSize() { return Math.random() * 15 + 13; }
 
 // Task System
@@ -325,15 +326,14 @@ function AstronautPixelGame() {
       // Adjusted difficulty ramping for longer, fairer sessions:
       const seconds = Math.floor(stats.time / FPS);
 
-      // Enemies/asteroids spawn more slowly at first and ramp up later
-      // Ramp up gentler for the first 60 seconds, then picks up
+      // Asteroid/alien spawn logic - make spawn even slower and more relaxed than previous values
       if (seconds < 60) {
-        alienCooldown = Math.max(95, 150 - seconds * 1.3);       // start easy
-        asteroidCooldown = Math.max(60, 110 - seconds * 0.9);    // start easy
+        alienCooldown = Math.max(110, 170 - seconds * 1.0);     // similar for aliens
+        asteroidCooldown = Math.max(110, 180 - seconds * 0.6);  // much slower/fewer asteroids
         zoneRef.current.cooldown = Math.max(256, 420 - seconds * 2.7);
       } else {
-        alienCooldown = Math.max(40, 95 - (seconds - 60) * 1.2);
-        asteroidCooldown = Math.max(26, 60 - (seconds - 60) * 0.65);
+        alienCooldown = Math.max(60, 115 - (seconds - 60) * 1.0);
+        asteroidCooldown = Math.max(50, 110 - (seconds - 60) * 0.4);
         zoneRef.current.cooldown = Math.max(120, 236 - (seconds - 60) * 2.8);
       }
 
@@ -425,14 +425,17 @@ function AstronautPixelGame() {
       if (stats.time - lastAsteroid > asteroidCooldown) {
         // Early game: less asteroid damage, later higher
         let astDamage = seconds < 90 ? 8 : 12 + Math.floor(seconds / 6);
+        // Use new (slower) velocity
+        const slowVx = -randomVel(); // always negative, but smaller magnitude
+        const slowVy = randomVel() * 0.6; // vertical drift even slower
         asteroidsRef.current.push({
           x: GAME_WIDTH + 23,
           y: randomPosY(),
           r: randomAsteroidSize(),
-          vy: randomVel() - 1.32,
-          vx: -randomVel(),
+          vy: slowVy,
+          vx: slowVx,
           damage: astDamage,
-          life: 70 + Math.floor(seconds * 0.9),
+          life: 90 + Math.floor(seconds * 0.9), // asteroids stick around a bit longer
         });
         lastAsteroid = stats.time;
       }
