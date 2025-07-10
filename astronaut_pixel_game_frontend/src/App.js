@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import "./App.css";
 
-// Constants
+/**
+ * Constants - some adjusted to ensure longer initial gameplay session and an easier opening difficulty:
+ */
 const GAME_WIDTH = 480;
 const GAME_HEIGHT = 320;
 const PLAYER_SIZE = 24;
@@ -201,10 +203,11 @@ function AstronautPixelGame() {
   const [running, setRunning] = useState(true);
   const [paused, setPaused] = useState(false);
   const [stats, setStats] = useState({
-    integrity: 100,
+    // Start with more structure and player health for greater survivability
+    integrity: 135,
     score: 0,
     tasksComplete: 0,
-    playerHealth: 5,
+    playerHealth: 9,
     time: 0,
   });
   const [showZone, setShowZone] = useState(false);
@@ -319,11 +322,20 @@ function AstronautPixelGame() {
       const ctx = canvasRef.current.getContext("2d");
       ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-      // Increase difficulty over time
+      // Adjusted difficulty ramping for longer, fairer sessions:
       const seconds = Math.floor(stats.time / FPS);
-      alienCooldown = Math.max(65, 80 - seconds*2);
-      asteroidCooldown = Math.max(38, 60 - seconds);
-      zoneRef.current.cooldown = Math.max(210, 320 - seconds*9);
+
+      // Enemies/asteroids spawn more slowly at first and ramp up later
+      // Ramp up gentler for the first 60 seconds, then picks up
+      if (seconds < 60) {
+        alienCooldown = Math.max(95, 150 - seconds * 1.3);       // start easy
+        asteroidCooldown = Math.max(60, 110 - seconds * 0.9);    // start easy
+        zoneRef.current.cooldown = Math.max(256, 420 - seconds * 2.7);
+      } else {
+        alienCooldown = Math.max(40, 95 - (seconds - 60) * 1.2);
+        asteroidCooldown = Math.max(26, 60 - (seconds - 60) * 0.65);
+        zoneRef.current.cooldown = Math.max(120, 236 - (seconds - 60) * 2.8);
+      }
 
       // =================== RENDER ===============
       // Draw structure bar
@@ -398,24 +410,28 @@ function AstronautPixelGame() {
 
       // Aliens spawn
       if (stats.time - lastAlien > alienCooldown) {
+        // Early game: lower HP aliens for balance; can ramp up after 2 minutes
+        let alienHP = seconds < 120 ? 1 : 2 + Math.floor(seconds / 18);
         aliensRef.current.push({
           x: Math.random() > 0.5 ? -PLAYER_SIZE : GAME_WIDTH,
           y: randomPosY(),
           dir: Math.random() > 0.5 ? "right" : "left",
           alive: true,
-          hp: 2 + Math.floor(seconds / 18),
+          hp: alienHP,
         });
         lastAlien = stats.time;
       }
       // Asteroids spawn
       if (stats.time - lastAsteroid > asteroidCooldown) {
+        // Early game: less asteroid damage, later higher
+        let astDamage = seconds < 90 ? 8 : 12 + Math.floor(seconds / 6);
         asteroidsRef.current.push({
           x: GAME_WIDTH + 23,
           y: randomPosY(),
           r: randomAsteroidSize(),
           vy: randomVel() - 1.32,
           vx: -randomVel(),
-          damage: 13 + Math.floor(seconds / 4),
+          damage: astDamage,
           life: 70 + Math.floor(seconds * 0.9),
         });
         lastAsteroid = stats.time;
@@ -485,10 +501,13 @@ function AstronautPixelGame() {
           Math.abs(alien.x - playerRef.current.x) < PLAYER_SIZE - 6 &&
           Math.abs(alien.y - playerRef.current.y) < PLAYER_SIZE - 8
         ) {
+          // Early-game (first 120s): reduce damage by 50%
+          let pDmg = seconds < 120 ? 0.5 : 1;
+          let structDmg = seconds < 120 ? 0.4 : 1;
           setStats((prev) => ({
             ...prev,
-            playerHealth: Math.max(prev.playerHealth - 1, 0),
-            integrity: Math.max(prev.integrity - 6, 0),
+            playerHealth: Math.max(prev.playerHealth - pDmg, 0),
+            integrity: Math.max(prev.integrity - 6 * structDmg, 0),
           }));
           alien.x = -99;
           hitSound();
@@ -499,10 +518,13 @@ function AstronautPixelGame() {
       asteroidsRef.current.forEach((a) => {
         const dx = (a.x + a.r) - (playerRef.current.x + PLAYER_SIZE / 2), dy = (a.y + a.r) - (playerRef.current.y + PLAYER_SIZE / 2);
         if (Math.abs(dx) < a.r + PLAYER_SIZE / 2 - 2 && Math.abs(dy) < a.r + PLAYER_SIZE / 2 - 2) {
+          // Early-game: less damage taken
+          let pDmg = seconds < 90 ? 1 : 2;
+          let structDmg = seconds < 90 ? a.damage * 0.56 : a.damage;
           setStats((prev) => ({
             ...prev,
-            playerHealth: Math.max(prev.playerHealth - 2, 0),
-            integrity: Math.max(prev.integrity - a.damage, 0),
+            playerHealth: Math.max(prev.playerHealth - pDmg, 0),
+            integrity: Math.max(prev.integrity - structDmg, 0),
           }));
           a.life = 0;
           hitSound();
@@ -512,9 +534,11 @@ function AstronautPixelGame() {
       // Asteroid & structure collision (bottom edge)
       asteroidsRef.current.forEach((a) => {
         if (a.y + a.r > GAME_HEIGHT - 6) {
+          // Reduce early-game structure damage
+          let structDmg = seconds < 90 ? a.damage * 0.54 : a.damage;
           setStats((prev) => ({
             ...prev,
-            integrity: Math.max(prev.integrity - a.damage, 0),
+            integrity: Math.max(prev.integrity - structDmg, 0),
           }));
           a.life = 0;
           hitSound();
