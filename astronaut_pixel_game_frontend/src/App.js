@@ -19,22 +19,61 @@ const LASER_SPEED = 9;
 const ITEM_SIZE = 20;
 const FPS = 60;
 
-// Sound effect hooks
+/**
+ * Sound effect hook that plays a sound only after a user gesture
+ * enforced by the browser's media playback policies.
+ *
+ * Usage: 
+ *   const playSfx = useSound(url);
+ *   ...on user gesture: playSfx();
+ */
 function useSound(url, volume = 0.23) {
   const soundRef = useRef();
+  // Track if unlocking has occurred after user input
+  const unlockedRef = useRef(false);
+
+  // Attach Audio element
   useEffect(() => {
     if (url) {
       soundRef.current = new Audio(url);
       soundRef.current.volume = volume;
+      soundRef.current.preload = "auto";
     }
     return () => {
       if (soundRef.current) soundRef.current.pause();
     };
   }, [url, volume]);
+
+  // Function to unlock audio on user gesture
+  const unlockAudio = () => {
+    if (!soundRef.current) return;
+    // Play and immediately pause to enable programmatic play later
+    const promise = soundRef.current.play();
+    if (promise !== undefined) {
+      promise
+        .then(() => {
+          soundRef.current.pause();
+          soundRef.current.currentTime = 0;
+          unlockedRef.current = true;
+        })
+        .catch(() => {
+          // Some browsers may still block, but will succeed on next real gesture
+          unlockedRef.current = false;
+        });
+    } else {
+      unlockedRef.current = true; // Edge case
+    }
+  };
+
+  // Return function for use in event handler
   return () => {
-    if (soundRef.current) {
+    if (!soundRef.current) return;
+    if (!unlockedRef.current) {
+      // First real trigger attempt: unlock (should be called from user gesture)
+      unlockAudio();
+    } else {
       soundRef.current.currentTime = 0;
-      soundRef.current.play();
+      soundRef.current.play().catch(() => {}); // ignore play error
     }
   };
 }
@@ -183,10 +222,22 @@ function AstronautPixelGame() {
     shoot: false,
   });
 
+  // === NEW: require user gesture to unlock audio ===
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+
   // Sound effects (Optional, replace with your own .wav/mp3 if needed)
+  // These will only play after unlockUserAudio is called on a user gesture
   const fireSound = useSound("https://cdn.pixabay.com/audio/2022/10/16/audio_125b8360e3.mp3");
   const hitSound = useSound("https://cdn.pixabay.com/audio/2022/07/26/audio_124b478539.mp3");
   const taskSound = useSound("https://cdn.pixabay.com/audio/2022/07/26/audio_124b478539.mp3", 0.13);
+
+  // Unlock all game sounds after gesture:
+  const unlockUserAudio = () => {
+    fireSound();
+    hitSound();
+    taskSound();
+    setAudioUnlocked(true);
+  };
 
   // Entities
   const playerRef = useRef({
@@ -562,6 +613,57 @@ function AstronautPixelGame() {
 
   // Draw UI overlays (using React DOM)
   function renderOverlay() {
+    // User gesture overlay: stops interaction below until tapped/clicked
+    if (!audioUnlocked) {
+      // Visually dark overlay with a single button
+      return (
+        <div
+          className="ui-overlay"
+          style={{
+            width: GAME_WIDTH * scale,
+            height: GAME_HEIGHT * scale,
+            zIndex: 50,
+            position: "absolute",
+            left: 0,
+            top: 0,
+            background: "rgba(16,18,24,0.96)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{textAlign: "center" }}>
+            <h2 className="pixel" style={{ color: "#61dafb", margin: 18 }}>Astronaut Pixel Defender</h2>
+            <div className="pixel" style={{ margin: "17px 0 24px 0", color: "#b1cece" }}>Tap/click <b>Start Game</b> to enable sound & play!</div>
+            <button
+              style={{
+                fontSize: "1.19rem",
+                fontFamily: "inherit",
+                padding: "13px 34px",
+                background: "#25334F",
+                border: "2px solid #132efb",
+                color: "#fff",
+                borderRadius: "13px",
+                cursor: "pointer",
+                boxShadow: "0 1px 14px #25334faa",
+                letterSpacing: "1px"
+              }}
+              className="pixel-btn"
+              onClick={unlockUserAudio}
+              onTouchStart={unlockUserAudio}
+              autoFocus
+            >
+              Start Game / Enable Sound
+            </button>
+            <p style={{ color: "#cbcbfc", fontSize: "0.97rem", marginTop: 23 }}>
+              <b>Why?</b> <span style={{ color: "#bedfdf" }}>Browsers require a first user gesture (e.g., click, tap) before allowing audio playback.</span>
+            </p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="ui-overlay" style={{ width: GAME_WIDTH * scale }}>
         <div className="hud" style={{ left: 14 * scale }}>
