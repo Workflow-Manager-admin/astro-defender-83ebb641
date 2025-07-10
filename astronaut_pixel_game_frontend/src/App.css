@@ -1,104 +1,201 @@
-/* CSS Variables for Theme Management */
 :root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text-primary: #282c34;
-  --text-secondary: #61dafb;
-  --border-color: #e9ecef;
-  --button-bg: #007bff;
-  --button-text: #ffffff;
+  --primary: #25334F;
+  --secondary: #bedfdf;
+  --accent: #132efb;
+  --pixel-font: 'Press Start 2P', monospace;
+  --struct-bar: #e87a41;
+  --hud-bg: #1b232f;
+  --hud-fg: #bedfdf;
+  --zone-bg: #25334f98;
 }
-
-[data-theme="dark"] {
-  /* Dark theme colors */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #282c34;
-  --text-primary: #ffffff;
-  --text-secondary: #61dafb;
-  --border-color: #404040;
-  --button-bg: #0056b3;
-  --button-text: #ffffff;
+body, html, .App, .pixel {
+  font-family: var(--pixel-font), monospace !important;
+  background: #162124;
 }
-
 .App {
   text-align: center;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background: #162124;
+  color: #e8ecf2;
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.title-pixel {
+  font-size: 2rem;
+  color: var(--primary);
+  margin: 20px 0 8px 0;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px #00000060;
+}
+.subtitle {
+  color: var(--secondary);
+  font-size: 1rem;
+  letter-spacing: 1.5px;
+  font-weight: 400;
+  margin-bottom: 20px;
+  display: block;
+}
+.game-container {
+  margin: 0 auto 0 auto;
+  background: #25334F;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  border: 3.5px solid #122838;
+  box-shadow: 0 0 32px #162124bb;
+}
+canvas {
+  margin: 0;
+  display: block;
+  border-radius: 10px;
+  background: #25334F;
+  box-shadow: 0 0 12px #0009;
+  image-rendering: pixelated;
 }
 
-.App-logo {
-  height: 40vmin;
+.ui-overlay {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: var(--bg-secondary);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease;
-  position: relative;
-}
-
-.App-link {
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
-}
-
-.theme-toggle {
+.hud, .hud-right {
   position: absolute;
+  font-size: 1rem;
   top: 20px;
-  right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
-  border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
+  background: var(--hud-bg);
+  color: var(--hud-fg);
+  border-radius: 10px;
+  box-shadow: 0 1px 6px #0004;
+  padding: 6px 16px 2px 12px;
+  z-index: 1;
+}
+.hud { left: 11px; }
+.hud-right { right: 11px; }
+.hud span, .hud-right span { display: inline-block; min-width: 67px; }
+.bottom-controls {
+  position: absolute;
+  bottom: 7px; left: 50%; transform: translateX(-50%);
+  width: 100%;
+  z-index: 2;
+}
+.mobile-btns {
+  display: none;
+}
+.pixel-btn {
+  font-family: var(--pixel-font), monospace;
+  background: var(--accent);
+  color: #fff;
+  padding: 8px 13px;
+  font-size: 20px;
+  margin: 3px 5px;
+  border: 2px solid #0b113a;
+  border-radius: 7px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  filter: drop-shadow(0 1px 2px #25334fb2);
+  pointer-events: auto;
+  transition: filter .08s;
 }
-
-.theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+.pixel-fire {
+  background: #ff2020c9;
+  box-shadow: 0 0 12px #f302;
 }
-
-.theme-toggle:active {
-  transform: translateY(0);
+.pixel-btn:active, .pixel-btn:focus {
+  filter: brightness(0.8);
 }
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.task-zone-msg {
+  position: absolute;
+  left: 50%; transform: translateX(-50%);
+  top: 51px;
+  background: #1e2637e6;
+  color: #fff;
+  padding: 15px 23px 12px 23px;
+  font-size: 1.1rem;
+  border-radius: 11px;
+  border: 2px solid var(--accent);
+  width: 80%;
+  z-index: 3;
+  box-shadow: 0 1px 8px #25334faa, 0 1px 6px #0c1527c3;
+}
+.progressbar {
+  background: #444d;
+  border-radius: 3.5px;
+  height: 12px; margin: 8px 0 0 0; width: 98%;
+  border: 1px solid #9fd5fd;
+  overflow: hidden;
+}
+.progressbar > div {
+  height: 100%;
+  transition: width 0.16s;
+  background: #e87a41;
+}
+.overlay-msg {
+  position: absolute;
+  z-index: 8;
+  left: 20px; right: 20px; top: 90px;
+  background: #121c28f2;
+  color: #fff;
+  border-radius: 13px;
+  padding: 32px 12px 28px 12px;
+  text-align: center;
+  box-shadow: 0 1px 16px #0009;
+  border: 2.5px solid #7481b9ba;
+  font-size: 1.24rem;
+}
+.overlay-msg button {
+  margin-top: 23px;
+  font-size: 1.1rem;
+  font-family: var(--pixel-font), monospace;
+  font-variant: small-caps;
+  font-weight: bold;
+  padding: 11px 25px;
+  border-radius: 9px;
+  background: #2222ad;
+  color: #fff;
+  cursor: pointer;
+  border: 2px solid #90c3ef;
+  letter-spacing: 1.2px;
+  transition: box-shadow .07s;
+}
+.overlay-msg button:active {
+  background: #131775;
+}
+@media (max-width: 600px) {
+  .game-container {
+    margin: 0 auto;
+    border-radius: 9px;
+    width: 98vw !important;
+    max-width: 100vw !important;
+    min-width: 0;
   }
-  to {
-    transform: rotate(360deg);
+  .title-pixel, .subtitle {
+    font-size: 1.1rem;
+    margin: 8px 0 0 0;
+  }
+  .hud, .hud-right {
+    font-size: 0.93rem;
+    padding: 6px 4vw 2px 4vw;
+    border-radius: 7px;
+    top: 7px;
+  }
+  .overlay-msg {
+    padding: 24px 2vw 18px 2vw;
+    top: 52px;
+    left: 4px; right: 4px;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  .progressbar {
+    height: 8px;
+  }
+  .task-zone-msg {
+    padding: 11px 9px 8px 17px;
+    border-radius: 8px;
+    font-size: .97rem;
+    width: 96%;
+    min-width: 0;
   }
 }
-
-/* Responsive design for mobile */
-@media (max-width: 768px) {
-  .theme-toggle {
-    top: 10px;
-    right: 10px;
-    padding: 8px 16px;
-    font-size: 12px;
-  }
+@media (max-width: 767px) {
+  .mobile-btns { display: flex; justify-content: center; margin: 8px 0 2px 0; }
+  .pixel-btn { font-size: 16px; padding: 8px 7px; margin: 1.5px 4px; }
 }
