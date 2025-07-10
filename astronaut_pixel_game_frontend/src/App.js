@@ -69,20 +69,61 @@ function useSound(url, volume = 0.23) {
 // Utility
 const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
 
-// Entity Sprite Renderers (pure pixel shapes)
+/**
+ * Draw the player's spaceship: longer, pointier retro pixel art style.
+ */
 function drawPlayer(ctx, x, y, left) {
+  // New sprite constants
+  const WIDTH = 18;
+  const LENGTH = 40;
+
+  // Main body
+  ctx.save();
+  ctx.translate(x, y);
+  if (left) {
+    ctx.scale(-1, 1);
+    ctx.translate(-WIDTH, 0);
+  }
+
+  // Body main (hull)
   ctx.fillStyle = PLAYER_COLOR;
-  ctx.fillRect(x, y, PLAYER_SIZE, PLAYER_SIZE);
+  ctx.beginPath();
+  ctx.moveTo(WIDTH / 2, 0); // tip
+  ctx.lineTo(0, LENGTH - 6); // bottom left
+  ctx.lineTo(WIDTH, LENGTH - 6); // bottom right
+  ctx.closePath();
+  ctx.fill();
+
+  // Center window
   ctx.fillStyle = "#fff";
-  ctx.globalAlpha = 0.4;
-  ctx.fillRect(x + 3, y + 3, 6, 7);
+  ctx.globalAlpha = 0.6;
+  ctx.fillRect(WIDTH / 2 - 4, 9, 8, 9);
   ctx.globalAlpha = 1;
+
+  // Ship Cockpit
   ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(x + 5, y + 8, 14, 6);
+  ctx.fillRect(WIDTH / 2 - 6, 17, 12, 6);
+
+  // Exhaust (thruster glow at bottom)
   ctx.fillStyle = "#cccfea";
-  ctx.fillRect(x + 7, y + 16, 10, 7);
+  ctx.beginPath();
+  ctx.moveTo(WIDTH / 2 - 5, LENGTH - 6);
+  ctx.lineTo(WIDTH / 2 + 5, LENGTH - 6);
+  ctx.lineTo(WIDTH / 2, LENGTH - 1);
+  ctx.closePath();
+  ctx.fill();
+
+  // Highlight trim
   ctx.fillStyle = "#6ea1ab";
-  ctx.fillRect(x + (left ? 0 : PLAYER_SIZE-5), y + 8, 5, 11);
+  ctx.fillRect(0, LENGTH - 12, 4, 6);
+  ctx.fillRect(WIDTH - 4, LENGTH - 12, 4, 6);
+
+  // Retro pixel lines for "fins"
+  ctx.fillStyle = "#3b6d6d";
+  ctx.fillRect(1, LENGTH - 17, 3, 6);
+  ctx.fillRect(WIDTH - 4, LENGTH - 17, 3, 6);
+
+  ctx.restore();
 }
 function drawAlien(ctx, x, y, type = 0) {
   ctx.save();
@@ -429,12 +470,12 @@ function AstronautPixelGame() {
           Math.abs(alien.x - playerRef.current.x) < PLAYER_SIZE - 6 &&
           Math.abs(alien.y - playerRef.current.y) < PLAYER_SIZE - 8
         ) {
+          // Alien only affects player's health, NOT ship integrity
           let pDmg = 0.5 + (level * 0.15);
-          let structDmg = 0.5 + (level * 0.18);
           setStats((prev) => ({
             ...prev,
             playerHealth: Math.max(prev.playerHealth - pDmg, 0),
-            integrity: Math.max(prev.integrity - 6 * structDmg, 0),
+            // integrity unchanged
           }));
           alien.x = -99;
           hitSound();
@@ -447,6 +488,7 @@ function AstronautPixelGame() {
           let structDmg = a.damage * (0.56 + 0.05 * (level - 1));
           setStats((prev) => ({
             ...prev,
+            // Only asteroid collisions reduce both health and structural integrity
             playerHealth: Math.max(prev.playerHealth - pDmg, 0),
             integrity: Math.max(prev.integrity - structDmg, 0),
           }));
